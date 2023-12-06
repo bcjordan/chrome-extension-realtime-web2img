@@ -11,5 +11,8 @@
   "devDependencies": {
     "@crxjs/vite-plugin": "beta",
     "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "@fal-ai/serverless-client": "^0.6.1"
   }
 }
