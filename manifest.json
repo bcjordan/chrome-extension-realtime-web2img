@@ -3,6 +3,8 @@
   "name": "CRXJS Vanilla JS Example",
   "version": "1.0.0",
   "action": { "default_popup": "index.html" },
+  "permissions": ["storage"],
+
   "content_scripts": [
     {
       "js": ["src/content.js"],

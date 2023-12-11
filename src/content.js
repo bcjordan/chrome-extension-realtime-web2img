@@ -12,16 +12,19 @@ const doc = new DOMParser().parseFromString(html, 'text/html')
 document.body.append(doc.body.firstElementChild)
 const previewRef = document.getElementById('preview');
 
-previewRef.style.width = '512px';
-previewRef.style.height = '512px';
+const previewMaxSize = '512px';
+const previewMinSize = '256px';
+
+previewRef.style.width = previewMaxSize;
+previewRef.style.height = previewMaxSize;
 previewRef.style.opacity = '1';
 
 previewRef.onclick = () => {
   // toggle vis
   console.log(previewRef.style.opacity)
   previewRef.style.opacity = previewRef.style.opacity === '1' ? '.25' : '1';
-  previewRef.style.width = previewRef.style.width === '512px' ? '256px' : '512px';
-  previewRef.style.height = previewRef.style.height === '512px' ? '256px' : '512px';
+  previewRef.style.width = previewRef.style.width === previewMaxSize ? previewMinSize : previewMaxSize;
+  previewRef.style.height = previewRef.style.height === previewMaxSize ? previewMinSize : previewMaxSize;
 }
 
 let n = 0;
@@ -106,22 +109,35 @@ let rotate = () => {
 
     const imageUrl = videoElement ? snapVideo(videoElement) : snapCanvas(canvasElement);
 
-    console.log(imageUrl);
-    connection.send({
-      // snag a canvas' data URL usng e.g. threeJSRenderer.domElement.toDataURL("image/png"); or canvas.toDataURL("image/png");
-      // NOTE: ensure your input is 512x512. Other sizes may negatively impact inference performance.
-      image_url: imageUrl,
-      sync_mode: true,
-      // Mess with prompt here, text box would be awesome (could even go in main.js popup instead of content)
-      prompt:     `colorful bright icy mountain glittering powder 4k top amazing`,
+    // console.log(imageUrl);
+    const rqid = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    requestsById[rqid] = imageUrl;
 
-      strength: 0.65,
-      num_inference_steps: 8,
-      seed: 1234,
-      // if you want it to not have consistency across frames / re-roll dice:
-      // seed: Math.abs(Math.floor(Math.random() * 100000)),
-      enable_safety_checks: false,
-    })
+    // Only if localStorage.getItem('lcm') === 'true'
+    chrome.storage.local.get(['lcm'], function(result) {
+      if (result.lcm) {
+        connection.send({
+          // Set id
+          request_id: // unique id for this request, used to match up with response
+            rqid,
+          // snag a canvas' data URL usng e.g. threeJSRenderer.domElement.toDataURL("image/png"); or canvas.toDataURL("image/png");
+          // NOTE: ensure your input is 512x512. Other sizes may negatively impact inference performance.
+          image_url: imageUrl,
+          sync_mode: true,
+          // Mess with prompt here, text box would be awesome (could even go in main.js popup instead of content)
+          prompt: 'yellow square gemini ship supernova galaxy telescope photo 4k amazing',
+          strength: 0.45,
+          num_inference_steps: 8,
+          seed: 1234,
+          // if you want it to not have consistency across frames / re-roll dice:
+          // seed: Math.abs(Math.floor(Math.random() * 100000)),
+          enable_safety_checks: false,
+        })
+        
+      } else {
+        chrome.runtime.sendMessage({imageURL: null, sourceImageURL: requestsById[rqid]});
+      }
+    });
   }
 
   requestAnimationFrame(rotate);
@@ -138,12 +154,14 @@ requestAnimationFrame(rotate);
 //        this won't impact realtime performance (it just passes a token during socket auth instead)
 import * as fal from "@fal-ai/serverless-client";
 fal.config({
-  credentials: "MY_LONG_FAL_AI_KEY" // get at https://www.fal.ai/dashboard/keys
+  credentials: "MY_FAL_AI_KEY_HERE" // get at https://www.fal.ai/dashboard/keys
   // track usage / set limits at https://www.fal.ai/dashboard/usage
 })
 
+const requestsById = {};
+
 // Connect to fal realtime endpoint. As of December 4th, 2023, this is the fastest.
-const connection = fal.realtime.connect('110602490-lcm-plexed-sd15-i2i', {
+const connection = fal.realtime.connect('110602490-lcm-sd15-i2i', {
   connectionKey: 'realtime-connection-key',
   clientOnly: false,
   // if you want to use fal's default throttling, you might be able to just raise this value.
@@ -156,7 +174,8 @@ const connection = fal.realtime.connect('110602490-lcm-plexed-sd15-i2i', {
   onResult: (result) => {
     if (result.images && result.images[0]) {
       let imageURL = result.images[0].url;
-      console.log(imageURL) // - this is your image, base64 encoded jpeg
+      console.log(result) // - this is your image, base64 encoded jpeg
+      chrome.runtime.sendMessage({imageURL: imageURL, sourceImageURL: requestsById[result.request_id]});
       // Set to #preview
       document.querySelector('#preview').src = imageURL;
 
