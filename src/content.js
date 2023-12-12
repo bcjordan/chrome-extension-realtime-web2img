@@ -125,8 +125,8 @@ let rotate = () => {
           image_url: imageUrl,
           sync_mode: true,
           // Mess with prompt here, text box would be awesome (could even go in main.js popup instead of content)
-          prompt: 'yellow square gemini ship supernova galaxy telescope photo 4k amazing',
-          strength: 0.45,
+          prompt: 'adorable kittens',
+          strength: 0.35,
           num_inference_steps: 8,
           seed: 1234,
           // if you want it to not have consistency across frames / re-roll dice:
@@ -154,7 +154,7 @@ requestAnimationFrame(rotate);
 //        this won't impact realtime performance (it just passes a token during socket auth instead)
 import * as fal from "@fal-ai/serverless-client";
 fal.config({
-  credentials: "MY_FAL_AI_KEY_HERE" // get at https://www.fal.ai/dashboard/keys
+  credentials: import.meta.env.VITE_FAL_AI_KEY // get at https://www.fal.ai/dashboard/keys
   // track usage / set limits at https://www.fal.ai/dashboard/usage
 })
 
@@ -166,7 +166,7 @@ const connection = fal.realtime.connect('110602490-lcm-sd15-i2i', {
   clientOnly: false,
   // if you want to use fal's default throttling, you might be able to just raise this value.
   //   but see below for sample of adaptive request timing (feels better for partially-interactive continuous i2i)
-  throttleInterval: 250,
+  throttleInterval: 150,
   onError: (error) => {
     // Re-set-up needed? Not sure
     console.error(error)

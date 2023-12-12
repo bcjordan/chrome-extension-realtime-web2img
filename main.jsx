@@ -39,7 +39,7 @@ class App extends React.Component {
 
   async componentDidMount() {
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-      if (state.checked) {
+      if (this.state.checked) {
         this.setState({img: request.imageURL, sourceImg: request.sourceImageURL});
       } else {
         this.setState({img: null, sourceImg: request.sourceImageURL});
