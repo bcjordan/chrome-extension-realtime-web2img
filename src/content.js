@@ -198,7 +198,7 @@ const connection = fal.realtime.connect('110602490-lcm-sd15-i2i', {
   clientOnly: false,
   // if you want to use fal's default throttling, you might be able to just raise this value.
   //   but see below for sample of adaptive request timing (feels better for partially-interactive continuous i2i)
-  throttleInterval: 150,
+  throttleInterval: 50,
   onError: (error) => {
     // Re-set-up needed? Not sure
     console.error(error)
