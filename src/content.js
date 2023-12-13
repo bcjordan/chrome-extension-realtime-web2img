@@ -1,6 +1,19 @@
 import src from './sand.jpg'
 import './content.css'
 
+// On press period, shift to next prompt by incrementing startTime
+// On press comma, shift to previous prompt by decrementing startTime
+let startTime = +new Date();
+document.addEventListener('keydown', (e) => {
+  if (e.key === '.') {
+    console.log('next prompt');
+    startTime = startTime - 2000;
+  } else if (e.key === ',') {
+    console.log('prev prompt');
+    startTime = Math.max(startTime - 2000, 0);
+  }
+});
+
 const html = `
 <div class="crx">
   <img id="preview" src="${chrome.runtime.getURL(src)}" />
@@ -95,6 +108,20 @@ function snapCanvas(canvasElement) {
   return myResizedData;
 }
 
+// Make period alternat prompts
+const prompts = [
+  'two 1920s men in suits with big fake handlebar mustaches',
+  'a cat with a human face',
+  'two men on construction site with a jackhammer',
+  'two astronauts floating in space outside a spacecraft',
+  'a medieval knight riding a bicycle',
+  'a futuristic cityscape with flying cars',
+  'a chef preparing sushi in a modern kitchen',
+  'a group of children playing in a treehouse',
+  'an underwater scene with a scuba diver and a giant octopus',
+  'a fantasy landscape with a dragon and a castle'
+];
+
 let rotate = () => {
   const canvasElement = document.querySelector('canvas')
   // console.log(el)
@@ -116,6 +143,10 @@ let rotate = () => {
     // Only if localStorage.getItem('lcm') === 'true'
     chrome.storage.local.get(['lcm'], function(result) {
       if (result.lcm) {
+        let timeSinceStart = +new Date() - startTime;
+        console.log(timeSinceStart)
+        let epochs = Math.floor(timeSinceStart / 2000);
+        console.log(epochs)
         connection.send({
           // Set id
           request_id: // unique id for this request, used to match up with response
@@ -125,7 +156,8 @@ let rotate = () => {
           image_url: imageUrl,
           sync_mode: true,
           // Mess with prompt here, text box would be awesome (could even go in main.js popup instead of content)
-          prompt: 'adorable kittens',
+          // Pick prompt based on startTime modulus every 5 seconds from prompts size
+          prompt: prompts[epochs % prompts.length],
           strength: 0.35,
           num_inference_steps: 8,
           seed: 1234,
